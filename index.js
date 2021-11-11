@@ -22,6 +22,7 @@ async function run (){
         await client.connect();
         const database = client.db('onlineShop_Ema_JOhn');
         const productCollection = database.collection('products');
+        const orderCollection = database.collection('orders');
 
         //GET Product API
         app.get('/products', async(req,res)=>{
@@ -31,7 +32,7 @@ async function run (){
             const size = parseInt(req.query.size);
             let products;
             const count = await cursor.count()
-            
+
             if(page){
                 products = await cursor.skip(page*size).limit(size).toArray();
 
@@ -45,6 +46,23 @@ async function run (){
                 count,
                 products
             });
+        });
+
+        //USe POST to get data by keys
+        app.post('/products/byKeys',async(req,res)=>{
+            const keys = req.body;
+            const query = {key: {$in: keys}}
+            const products = await productCollection.find(query).toArray()
+            res.json(products)
+            //res.send('Hitting POST')
+        });
+
+        // Add Orders API
+        app.post('/orders', async(req,res) => {
+            const order = req.body;
+            const result = await orderCollection.insertOne(order)
+            //console.log('Order', order);
+            res.json(result)
         })
         
     }
@@ -54,6 +72,7 @@ async function run (){
         //await client.close()
     }
 }
+
 run().catch(console.dir)
 
 app.get('/', (req,res)=>{
